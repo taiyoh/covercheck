@@ -33,7 +33,7 @@ func TestController(t *testing.T) {
 	{
 		resp, err := cli.Get(testserver.URL + "/foo/bar/baz")
 		if err != nil {
-			t.Errorf("GET /foo/bar/baz error: %v", err)
+			t.Error(err)
 			return
 		}
 		defer resp.Body.Close()
@@ -45,7 +45,7 @@ func TestController(t *testing.T) {
 	{
 		resp, err := cli.Get(testserver.URL + "/foo/bar/baz")
 		if err != nil {
-			t.Errorf("GET /foo/bar/baz error: %v", err)
+			t.Error(err)
 			return
 		}
 		defer resp.Body.Close()
