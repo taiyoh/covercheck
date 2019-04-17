@@ -28,7 +28,7 @@ func newSuccess() Response {
 
 func newFail() Response {
 	return Response{
-		code:        http.StatusOK,
+		code:        http.StatusBadRequest,
 		contentType: "text/plain",
 		renderer: func() []byte {
 			return []byte("ng")
