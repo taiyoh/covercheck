@@ -24,7 +24,7 @@ func TestController(t *testing.T) {
 	ctrl := covercheck.NewController("/foo/bar/baz", okChecker)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(ctrl.Path(), ctrl.HandlerFunc())
+	mux.HandleFunc(ctrl.HandlerFunc())
 
 	testserver := httptest.NewServer(mux)
 	defer testserver.Close()
