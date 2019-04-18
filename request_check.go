@@ -10,36 +10,40 @@ import (
 
 // RequestChecker provides checker interface using HTTP request.
 type RequestChecker struct {
-	Method  string
-	URL     *url.URL
-	Headers http.Header
-	Body    []byte
+	method  string
+	url     *url.URL
+	headers http.Header
+	body    []byte
 }
 
+const xffKey = "X-Forwarded-For"
+
 // NewRequestCheckerGET returns RequestChecker object.
-func NewRequestCheckerGET(u *url.URL, headers http.Header) *RequestChecker {
+func NewRequestCheckerGET(forwardedFor string, u *url.URL, headers http.Header) *RequestChecker {
 	if headers == nil {
 		headers = http.Header{}
 	}
+	headers.Set(xffKey, forwardedFor)
 	return &RequestChecker{http.MethodGet, u, headers, nil}
 }
 
 // NewRequestCheckerPOST returns RequestChecker object.
-func NewRequestCheckerPOST(u *url.URL, headers http.Header, body []byte) *RequestChecker {
+func NewRequestCheckerPOST(forwardedFor string, u *url.URL, headers http.Header, body []byte) *RequestChecker {
 	if headers == nil {
 		headers = http.Header{}
 	}
+	headers.Set(xffKey, forwardedFor)
 	return &RequestChecker{http.MethodPost, u, headers, body}
 }
 
 // Checker returns Checker typed operation.
 func (c *RequestChecker) Checker() Checker {
 	return func(ctx context.Context) error {
-		req, err := http.NewRequest(c.Method, c.URL.String(), bytes.NewBuffer(c.Body))
+		req, err := http.NewRequest(c.method, c.url.String(), bytes.NewBuffer(c.body))
 		if err != nil {
 			return err
 		}
-		for name, values := range c.Headers {
+		for name, values := range c.headers {
 			for _, val := range values {
 				req.Header.Set(name, val)
 			}

@@ -13,6 +13,11 @@ import (
 func TestRequestChceckGET(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Forwarded-For") != "forwarder" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("NG"))
+			return
+		}
 		if r.URL.RawQuery != "hoge=fuga" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("NG"))
@@ -26,23 +31,32 @@ func TestRequestChceckGET(t *testing.T) {
 	defer testserver.Close()
 
 	for _, tt := range []struct {
-		label       string
-		query       string
-		expectedErr bool
+		label        string
+		forwardedFor string
+		query        string
+		expectedErr  bool
 	}{
 		{
 			"wrong query",
+			"forwarder",
 			"hoge=fugo",
 			true,
 		},
 		{
+			"wrong forwardfor",
+			"",
+			"hoge=fuga",
+			true,
+		},
+		{
 			"valid request",
+			"forwarder",
 			"hoge=fuga",
 			false,
 		},
 	} {
 		u, _ := url.Parse(testserver.URL + "/foo?" + tt.query)
-		c := covercheck.NewRequestCheckerGET(u, nil)
+		c := covercheck.NewRequestCheckerGET(tt.forwardedFor, u, nil)
 		checker := c.Checker()
 		actual := checker(context.Background()) != nil
 		if actual != tt.expectedErr {
@@ -104,7 +118,7 @@ func TestRequestChceckPOST(t *testing.T) {
 		},
 	} {
 		u, _ := url.Parse(testserver.URL + "/foo?" + tt.query)
-		c := covercheck.NewRequestCheckerPOST(u, headers, []byte(tt.form))
+		c := covercheck.NewRequestCheckerPOST("forwarder-test", u, headers, []byte(tt.form))
 		checker := c.Checker()
 		{
 			actual := checker(context.Background()) != nil
