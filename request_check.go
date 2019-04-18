@@ -1,9 +1,9 @@
 package covercheck
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 )
@@ -13,21 +13,29 @@ type RequestChecker struct {
 	Method  string
 	URL     *url.URL
 	Headers http.Header
-	Body    io.Reader
+	Body    []byte
 }
 
 // NewRequestCheckerGET returns RequestChecker object.
 func NewRequestCheckerGET(u *url.URL, headers http.Header) *RequestChecker {
 	if headers == nil {
-		headers = map[string][]string{}
+		headers = http.Header{}
 	}
 	return &RequestChecker{http.MethodGet, u, headers, nil}
+}
+
+// NewRequestCheckerPOST returns RequestChecker object.
+func NewRequestCheckerPOST(u *url.URL, headers http.Header, body []byte) *RequestChecker {
+	if headers == nil {
+		headers = http.Header{}
+	}
+	return &RequestChecker{http.MethodPost, u, headers, body}
 }
 
 // Checker returns Checker typed operation.
 func (c *RequestChecker) Checker() Checker {
 	return func(ctx context.Context) error {
-		req, err := http.NewRequest(c.Method, c.URL.String(), c.Body)
+		req, err := http.NewRequest(c.Method, c.URL.String(), bytes.NewBuffer(c.Body))
 		if err != nil {
 			return err
 		}
