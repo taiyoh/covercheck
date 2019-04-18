@@ -74,6 +74,11 @@ func (d *Dispatcher) AddController(c *Controller) {
 	d.mux.HandleFunc(c.HandlerFunc())
 }
 
+// PathCheck provides syntax sugar for cc.AddController(covercheck.NewController("/foopath", checker1, checker2)).
+func (d *Dispatcher) PathCheck(path string, checklist ...Checker) {
+	d.AddController(NewController(path, checklist...))
+}
+
 // Mux returns http.ServeMux object
 func (d *Dispatcher) Mux() *http.ServeMux {
 	return d.mux
