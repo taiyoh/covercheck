@@ -32,7 +32,7 @@ func TestRequestChceckGET(t *testing.T) {
 
 	t.Run("wrong request method", func(t *testing.T) {
 		u, _ := url.Parse(testserver.URL + "/foo?hoge=fuga")
-		headers := map[string][]string{
+		headers := http.Header{
 			"Content-Type": []string{
 				"application/x-www-form-urlencoded",
 			},
@@ -109,7 +109,7 @@ func TestRequestChceckPOST(t *testing.T) {
 	})
 
 	t.Run("POST request", func(t *testing.T) {
-		headers := map[string][]string{
+		headers := http.Header{
 			"Content-Type": []string{
 				"application/x-www-form-urlencoded",
 			},
