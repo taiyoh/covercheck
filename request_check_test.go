@@ -65,6 +65,52 @@ func TestRequestChceckGET(t *testing.T) {
 	}
 }
 
+func TestRequestChceckGETForXFF(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Forwarded-For") != "forwarder1, forwarder2" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("NG"))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	testserver := httptest.NewServer(mux)
+	defer testserver.Close()
+
+	for _, tt := range []struct {
+		label        string
+		forwardedFor string
+		headers      http.Header
+		expectedErr  bool
+	}{
+		{
+			"wrong forwarder",
+			"forwarder2",
+			http.Header{},
+			true,
+		},
+		{
+			"valid request",
+			"forwarder2",
+			http.Header{
+				"X-Forwarded-For": []string{"forwarder1"},
+			},
+			false,
+		},
+	} {
+		u, _ := url.Parse(testserver.URL + "/foo")
+		c := covercheck.NewRequestCheckerGET(tt.forwardedFor, u, tt.headers)
+		checker := c.Checker()
+		actual := checker(context.Background()) != nil
+		if actual != tt.expectedErr {
+			t.Errorf("[%s] expected:%v, actual:%v", tt.label, tt.expectedErr, actual)
+		}
+	}
+}
+
 func TestRequestChceckPOST(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
