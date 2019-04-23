@@ -18,21 +18,30 @@ type RequestChecker struct {
 
 const xffKey = "X-Forwarded-For"
 
+func fillXFFHeader(f string, h http.Header) http.Header {
+	if h == nil {
+		h = http.Header{}
+	}
+	if xff, exists := h[xffKey]; exists {
+		for i, v := range xff {
+			xff[i] = fmt.Sprintf("%s, %s", v, f)
+		}
+		h[xffKey] = xff
+		return h
+	}
+	h.Set(xffKey, f)
+	return h
+}
+
 // NewRequestCheckerGET returns RequestChecker object.
 func NewRequestCheckerGET(forwardedFor string, u *url.URL, headers http.Header) *RequestChecker {
-	if headers == nil {
-		headers = http.Header{}
-	}
-	headers.Set(xffKey, forwardedFor)
+	headers = fillXFFHeader(forwardedFor, headers)
 	return &RequestChecker{http.MethodGet, u, headers, nil}
 }
 
 // NewRequestCheckerPOST returns RequestChecker object.
 func NewRequestCheckerPOST(forwardedFor string, u *url.URL, headers http.Header, body []byte) *RequestChecker {
-	if headers == nil {
-		headers = http.Header{}
-	}
-	headers.Set(xffKey, forwardedFor)
+	headers = fillXFFHeader(forwardedFor, headers)
 	return &RequestChecker{http.MethodPost, u, headers, body}
 }
 
